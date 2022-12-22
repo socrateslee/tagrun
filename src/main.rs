@@ -11,6 +11,7 @@ fn print_help() {
     let message = r#"
 Usage:
 tagrun [--tag PROCESS_NAME_TAG] [--prefix PROCESS_NAME_PREFIX] COMMAND [ARG] ...
+tagrun --help
 
 Run COMMAND, and rename the process(i.e., argv[0] of the command line). 
 
@@ -33,7 +34,7 @@ And you can use `pgrep -f -x -a '\[test\]awake 1000'` to match the process.
 
 fn main() {
     let origin_args: Vec<String> = env::args().collect();    
-    if origin_args.len() <= 1 || origin_args[1] == "--help" {
+    if origin_args.len() > 1 && origin_args[1] == "--help" {
         print_help();
         exit(1);
     }
@@ -43,17 +44,19 @@ fn main() {
     if origin_args.len() >= 3 && (origin_args[1] == "--tag" || origin_args[1] == "--prefix") {
        ctrl_params.insert(origin_args[1].clone(), origin_args[2].clone());
        split_index = 3;
+       if origin_args.len() >= 5 && (origin_args[3] == "--tag" || origin_args[3] == "--prefix") {
+           ctrl_params.insert(origin_args[3].clone(), origin_args[4].clone());
+           split_index = 5;
+        }
     }
-    if origin_args.len() >= 5 && (origin_args[3] == "--tag" || origin_args[3] == "--prefix") {
-       ctrl_params.insert(origin_args[3].clone(), origin_args[4].clone());
-       split_index = 5;
-    }
-
-    println!("{:?}", ctrl_params);
 
     let mut _left: &[String];
     let right: &[String];
     (_left, right) = origin_args.split_at(split_index);
+    if right.len() < 1 {
+        print_help();
+        exit(1);
+    }
 
     let (target_cmd, target_params) = right.split_at(1);
     let mut tagged_cmd = target_cmd[0].clone();
